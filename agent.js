@@ -5,7 +5,7 @@ const PI = Math.PI;
 /**
  * Represents the environment where the car drives
  */
-class Scenery {
+class Arena {
   constructor(width, height, canvas) {
     this.width = width;
     this.height = height;
@@ -94,11 +94,11 @@ class Scenery {
 }
 
 /**
- * Base class for the car that can drive in the scenery
+ * Base class for the car that can drive in the arena
  */
-class Porsche {
+class Agent {
   constructor(
-    scenery,
+    arena,
     visionX,
     visionY,
     factorTheta,
@@ -108,7 +108,7 @@ class Porsche {
     vMax,
     frott,
   ) {
-    this.scenery = scenery;
+    this.arena = arena;
     this.visionX = visionX;
     this.visionY = visionY;
     this.factorTheta = factorTheta;
@@ -161,10 +161,7 @@ class Porsche {
     this.y += this.v * Math.sin(this.theta) * dt;
 
     // Check collision
-    this.collision = this.scenery.collide(
-      Math.floor(this.x),
-      Math.floor(this.y),
-    );
+    this.collision = this.arena.collide(Math.floor(this.x), Math.floor(this.y));
     if (this.collision) {
       this.x = oldX;
       this.y = oldY;
@@ -181,10 +178,7 @@ class Porsche {
 
     // Update distance
     this.distance +=
-      this.v *
-      dt *
-      (this.x / this.scenery.width) *
-      (this.y / this.scenery.height);
+      this.v * dt * (this.x / this.arena.width) * (this.y / this.arena.height);
   }
 
   vision(ctx) {
@@ -194,7 +188,7 @@ class Porsche {
     for (let i = 0; i < this.visionX; i++, tTheta += step) {
       const color =
         i === Math.floor(this.visionX / 2) ? kColor - 3 : kColor + 1;
-      const dist = this.scenery.prof(
+      const dist = this.arena.prof(
         this.x,
         this.y,
         tTheta,
@@ -229,9 +223,9 @@ class Porsche {
 /**
  * Extended car class with different vision method
  */
-class MapPorsche extends Porsche {
+class MapAgent extends Agent {
   constructor(
-    scenery,
+    arena,
     visionX,
     visionY,
     factorTheta,
@@ -242,7 +236,7 @@ class MapPorsche extends Porsche {
     frott,
   ) {
     super(
-      scenery,
+      arena,
       visionX,
       visionY,
       factorTheta,
@@ -306,7 +300,7 @@ class MapPorsche extends Porsche {
       -Ax * (this.visionX / (Bx - Ax)),
       -By * (this.visionY / (Cy - By)),
     );
-    this.viewerCtx.drawImage(this.scenery.canvas, 0, 0);
+    this.viewerCtx.drawImage(this.arena.canvas, 0, 0);
     this.viewerCtx.restore();
 
     // Update vision array

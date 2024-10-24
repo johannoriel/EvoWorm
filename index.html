@@ -6,9 +6,9 @@
         <link rel="stylesheet" type="text/css" href="styles.css" />
     </head>
     <body>
-        <script src="car.js"></script>
+        <script src="agent.js"></script>
         <script src="nn.js"></script>
-        <script src="gen.js"></script>
+        <script src="genetic.js"></script>
         <div class="container">
             <div class="simulation">
                 <canvas id="simulationCanvas" width="800" height="600"></canvas>
@@ -101,7 +101,7 @@
             const WinX = 800;
             const WinY = 600;
 
-            // Scenery options
+            // Arena options
             const BoxH = 30;
             const NbBoxes = 20;
 
@@ -129,8 +129,8 @@
             let isShowing = false;
             const canvas = document.getElementById("simulationCanvas");
             const ctx = canvas.getContext("2d", { willReadFrequently: true });
-            const scene = new Scenery(WinX, WinY, canvas);
-            scene.generate(10, 50); // 10 boxes of size 50
+            const arena = new Arena(WinX, WinY, canvas);
+            arena.generate(10, 50); // 10 boxes of size 50
             let population = new Population(populationSize, 0.1);
             updateStats();
 
@@ -180,10 +180,6 @@
                     case "ArrowLeft":
                         muteFactorInput.value =
                             parseInt(muteFactorInput.value) - 1;
-                        break;
-                    case " ":
-                        // Save best creature
-                        saveBestCreature();
                         break;
                     case "n":
                     case "N":

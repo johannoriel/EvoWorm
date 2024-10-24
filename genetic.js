@@ -1,4 +1,4 @@
-class Creature {
+class Worm {
   constructor() {
     this.score = 0;
     this.time = 0;
@@ -7,11 +7,11 @@ class Creature {
     this.animating = false;
     this.paused = false;
     this.canvas = null;
-    this.porsche = null; // Instance de Porsche spécifique à cette creature
+    this.agent = null; // Instance de Agent spécifique à cette worm
 
     // Initialize neural network
     this.initNetwork();
-    this.initPorsche();
+    this.initAgent();
     this.animationFrameId = null;
     this.processScore = this.processScore.bind(this);
     this.animateLoop = this.animateLoop.bind(this);
@@ -26,8 +26,8 @@ class Creature {
     this.score = 0;
     this.stopAnimation();
     this.canvas = null;
-    if (this.porsche) {
-      this.porsche.init(StartSpeed);
+    if (this.agent) {
+      this.agent.init(StartSpeed);
     }
   }
 
@@ -45,9 +45,9 @@ class Creature {
     this.outputs.initRandom(0.2);
   }
 
-  initPorsche() {
-    this.porsche = new Porsche(
-      scene,
+  initAgent() {
+    this.agent = new Agent(
+      arena,
       VisionX,
       VisionY,
       FactorTheta,
@@ -56,16 +56,16 @@ class Creature {
       MinSpeed,
       MaxSpeed,
       kFrott,
-    ); // Supposant que vous avez une classe Porsche
-    this.porsche.init(StartSpeed);
+    ); // Supposant que vous avez une classe Agent
+    this.agent.init(StartSpeed);
   }
 
-  copy(creature) {
-    this.net.copy(creature.net);
-    this.score = creature.score;
-    this.time = creature.time;
-    this.alive = creature.alive;
-    this.muted = creature.muted;
+  copy(worm) {
+    this.net.copy(worm.net);
+    this.score = worm.score;
+    this.time = worm.time;
+    this.alive = worm.alive;
+    this.muted = worm.muted;
   }
 
   mute(percent, factor) {
@@ -85,8 +85,8 @@ class Creature {
       //console.log("Not alive anymore");
       return false;
     }
-    if (!this.porsche) {
-      this.initPorsche();
+    if (!this.agent) {
+      this.initAgent();
     }
 
     this.time++;
@@ -95,24 +95,24 @@ class Creature {
       // Clear and draw background
       const ctx = this.canvas.getContext("2d");
       ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      ctx.drawImage(scene.canvas, 0, 0);
+      ctx.drawImage(arena.canvas, 0, 0);
 
-      // Draw and update Porsche
-      this.porsche.iterate(ctx, dt);
-      this.porsche.vision(ctx);
+      // Draw and update Agent
+      this.agent.iterate(ctx, dt);
+      this.agent.vision(ctx);
       //console.log("animate Step "+this.time);
 
       // Check collision
-      this.alive = !this.porsche.collision;
+      this.alive = !this.agent.collision;
     } else {
-      this.porsche.iterate(null, dt);
-      this.porsche.vision(null);
-      this.alive = !this.porsche.collision;
+      this.agent.iterate(null, dt);
+      this.agent.vision(null);
+      this.alive = !this.agent.collision;
     }
 
     // Update neural network inputs from vision
     for (let i = 0; i < VisionX * VisionY; i++) {
-      this.entries.neurons[i].output = this.porsche.view[i];
+      this.entries.neurons[i].output = this.agent.view[i];
     }
 
     // Add feedback if enabled
@@ -130,7 +130,7 @@ class Creature {
         this.entries.neurons[baseIndex + i].output = 0;
       }
 
-      const speedIndex = Math.floor((porsche.v * FeedBackSpeed) / MaxSpeed);
+      const speedIndex = Math.floor((agent.v * FeedBackSpeed) / MaxSpeed);
       if (speedIndex >= 0 && speedIndex < FeedBackSpeed) {
         this.entries.neurons[baseIndex + speedIndex].output = 1;
       }
@@ -138,8 +138,8 @@ class Creature {
 
     // Process network and update car controls
     this.net.process();
-    this.porsche.setAccel(this.outputs.neurons[0].output * AccMax);
-    this.porsche.setRotation(this.outputs.neurons[1].output);
+    this.agent.setAccel(this.outputs.neurons[0].output * AccMax);
+    this.agent.setRotation(this.outputs.neurons[1].output);
 
     return true;
   }
@@ -159,7 +159,7 @@ class Creature {
       if (!shouldContinue) {
         //console.log("Should not continue");
         this.stopAnimation();
-        this.score = this.porsche.distance;
+        this.score = this.agent.distance;
         this.muted = false;
         //console.log(`Animation finished - Score: ${this.score.toFixed(2)}, Time: ${this.time}`);
         return;
@@ -177,11 +177,11 @@ class Creature {
     this.time = 0;
     this.alive = true;
 
-    // Initialize or reset Porsche
-    if (!this.porsche) {
-      this.initPorsche();
+    // Initialize or reset Agent
+    if (!this.agent) {
+      this.initAgent();
     } else {
-      this.porsche.init(StartSpeed);
+      this.agent.init(StartSpeed);
     }
 
     if (display) {
@@ -195,7 +195,7 @@ class Creature {
       while (this.time !== TimeLimit && this.alive) {
         this.animateStep(false, dt);
       }
-      this.score = this.porsche.distance;
+      this.score = this.agent.distance;
       this.muted = false;
     }
   }
@@ -220,7 +220,7 @@ class Population {
     this.nbCreatures = size;
     this.creatures = Array(size)
       .fill(null)
-      .map(() => new Creature());
+      .map(() => new Worm());
     this.scores = Array(size)
       .fill(null)
       .map((_, i) => ({ indice: i, score: 0 }));
@@ -305,7 +305,7 @@ class Population {
       /*console.log(
         this.creatures[i].median(),
         " : ",
-        this.creatures[i].porsche.distance,
+        this.creatures[i].agent.distance,
         " : ",
         this.creatures[i].time,
       );*/
@@ -322,7 +322,7 @@ class Population {
       this.creatures[i].stopAnimation();
     }
 
-    scene.generate(NbBoxes, BoxH);
+    arena.generate(NbBoxes, BoxH);
     for (let i = 0; i < this.nbCreatures; i++) {
       this.creatures[i].muted = true;
     }
