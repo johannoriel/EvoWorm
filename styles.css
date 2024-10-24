@@ -1,0 +1,93 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f0f0f0;
+}
+.container {
+    display: grid;
+    grid-template-columns: auto 300px;
+    gap: 20px;
+}
+.simulation {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.controls {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.control-group {
+    margin-bottom: 15px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+button {
+    padding: 8px 16px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 5px 0;
+    width: 100%;
+}
+button:hover {
+    background: #45a049;
+}
+.stats {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f8f8f8;
+    border-radius: 4px;
+}
+.keyboard-controls {
+    margin-top: 20px;
+    padding: 10px;
+    background: #f8f8f8;
+    border-radius: 4px;
+}
+.keyboard-controls kbd {
+    background: #eee;
+    border-radius: 3px;
+    border: 1px solid #b4b4b4;
+    padding: 2px 4px;
+    font-size: 0.9em;
+}
+
+.scores-table-container {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.scores-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+.scores-table th,
+.scores-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.scores-table th {
+    background-color: #f4f4f4;
+    position: sticky;
+    top: 0;
+}
+
+.scores-table tr:nth-child(even) {
+    background-color: #f8f8f8;
+}

@@ -1,0 +1,272 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Neural Car Evolution</title>
+        <style></style>
+        <link rel="stylesheet" type="text/css" href="styles.css" />
+    </head>
+    <body>
+        <script src="car.js"></script>
+        <script src="nn.js"></script>
+        <script src="gen.js"></script>
+        <div class="container">
+            <div class="simulation">
+                <canvas id="simulationCanvas" width="800" height="600"></canvas>
+            </div>
+
+            <div class="controls">
+                <h2>Evolution Controls</h2>
+                <div class="control-group">
+                    <label for="populationSize">Population Size:</label>
+                    <input
+                        type="number"
+                        id="populationSize"
+                        value="50"
+                        min="10"
+                        max="200"
+                    />
+                </div>
+                <div class="control-group">
+                    <label for="muteRatio">Mutation Ratio:</label>
+                    <input
+                        type="number"
+                        id="muteRatio"
+                        value="0.2"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                    />
+                </div>
+                <div class="control-group">
+                    <label for="muteFactor">Mutation Factor:</label>
+                    <input
+                        type="number"
+                        id="muteFactor"
+                        value="10"
+                        min="1"
+                        max="20"
+                    />
+                </div>
+                <button id="startButton">Start Evolution</button>
+                <button id="stopButton">Stop</button>
+                <button id="showButton">Show Best</button>
+                <button id="newMapButton">Generate New Map</button>
+
+                <div class="stats">
+                    <h3>Statistics</h3>
+                    <p>Generation: <span id="generation">0</span></p>
+                    <p>Best Score: <span id="bestScore">0</span></p>
+                    <p>Best Time: <span id="bestTime">0</span></p>
+                </div>
+                <!--div class="keyboard-controls">
+                    <h3>Keyboard Controls</h3>
+                    <p><kbd>↑</kbd> / <kbd>↓</kbd>: Adjust Mutation Ratio</p>
+                    <p><kbd>←</kbd> / <kbd>→</kbd>: Adjust Mutation Factor</p>
+                    <p><kbd>Space</kbd>: Save Best Creature</p>
+                    <p><kbd>N</kbd>: New Map</p>
+                </div-->
+            </div>
+
+            <div class="scores-table-container">
+                <h3>Scores par créature</h3>
+                <table id="scoresTable" class="scores-table">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Créature</th>
+                            <th>Score</th>
+                            <th>Time alive</th>
+                            <th>Median</th>
+                            <th>Génération</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Sera rempli dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            const populationSize = parseInt(
+                document.getElementById("populationSize").value,
+            );
+            const mutationRatio = parseInt(
+                document.getElementById("muteRatio").value,
+            );
+            const mutationFactor = parseInt(
+                document.getElementById("muteFactor").value,
+            );
+            // Simulation Constants
+            const WinX = 800;
+            const WinY = 600;
+
+            // Scenery options
+            const BoxH = 30;
+            const NbBoxes = 20;
+
+            // Porsche (car) options
+            const VisionX = 10;
+            const VisionY = 15;
+            const FactorTheta = 20;
+            const FactorDepth = 5;
+            const AccMax = 10;
+            const kFrott = 0;
+            const MaxSpeed = 30;
+            const MinSpeed = 4;
+            const StartSpeed = 20;
+
+            // Genetic algorithm + neural network options
+            const TimeLimit = 10000;
+            const MuteRatio = 0.2;
+            const MuteFactor = 10;
+            const FeedBack = 0;
+            const FeedBackSpeed = 0;
+
+            // Global instances
+            // Main simulation control
+            let isRunning = false;
+            let isShowing = false;
+            const canvas = document.getElementById("simulationCanvas");
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            const scene = new Scenery(WinX, WinY, canvas);
+            scene.generate(10, 50); // 10 boxes of size 50
+            let population = new Population(populationSize, 0.1);
+            updateStats();
+
+            startButton.addEventListener("click", () => {
+                isRunning = true;
+                runEvolution();
+            });
+
+            showButton.addEventListener("click", () => {
+                isShowing = true;
+                const best = population.getBest();
+                best.processScore(true, canvas, 0.00001);
+                isShowing = false;
+            });
+
+            stopButton.addEventListener("click", () => {
+                isRunning = false;
+            });
+
+            newMapButton.addEventListener("click", () => {
+                population.newMap();
+                isEvolutionPaused = false;
+            });
+
+            // Add keyboard controls
+            document.addEventListener("keydown", (event) => {
+                if (!population) return;
+
+                const muteRatioInput = document.getElementById("muteRatio");
+                const muteFactorInput = document.getElementById("muteFactor");
+
+                switch (event.key) {
+                    case "ArrowUp":
+                        muteRatioInput.value = (
+                            parseFloat(muteRatioInput.value) + 0.01
+                        ).toFixed(2);
+                        break;
+                    case "ArrowDown":
+                        muteRatioInput.value = (
+                            parseFloat(muteRatioInput.value) - 0.01
+                        ).toFixed(2);
+                        break;
+                    case "ArrowRight":
+                        muteFactorInput.value =
+                            parseInt(muteFactorInput.value) + 1;
+                        break;
+                    case "ArrowLeft":
+                        muteFactorInput.value =
+                            parseInt(muteFactorInput.value) - 1;
+                        break;
+                    case " ":
+                        // Save best creature
+                        saveBestCreature();
+                        break;
+                    case "n":
+                    case "N":
+                        population.newMap();
+                        updateStats();
+                        break;
+                }
+            });
+
+            // Modify runEvolution to show progression
+            function runEvolution() {
+                if (!isRunning) return;
+                if (isShowing) return;
+                //console.log("**** Runing evolution");
+
+                const muteRatio = parseFloat(
+                    document.getElementById("muteRatio").value,
+                );
+                const muteFactor = parseFloat(
+                    document.getElementById("muteFactor").value,
+                );
+
+                const oldBest = population.best;
+                population.process(muteRatio, muteFactor, 0.1);
+
+                updateStats();
+                requestAnimationFrame(runEvolution);
+            }
+
+            function updateStats() {
+                // Update existing stats
+                document.getElementById("generation").textContent =
+                    population.generation;
+                document.getElementById("bestScore").textContent =
+                    population.best.toFixed(2);
+                document.getElementById("bestTime").textContent =
+                    population.time;
+
+                // Update scores table
+                const tableBody = document.querySelector("#scoresTable tbody");
+                tableBody.innerHTML = ""; // Clear existing rows
+
+                // Create new rows for each creature
+                population.scores.forEach((score, index) => {
+                    const row = document.createElement("tr");
+
+                    // Rank column
+                    const rankCell = document.createElement("td");
+                    rankCell.textContent = index + 1;
+                    row.appendChild(rankCell);
+
+                    // Creature ID column
+                    const creatureCell = document.createElement("td");
+                    creatureCell.textContent = score.indice;
+                    row.appendChild(creatureCell);
+
+                    // Score column
+                    const scoreCell = document.createElement("td");
+                    scoreCell.textContent =
+                        population.creatures[score.indice].score.toFixed(2);
+                    row.appendChild(scoreCell);
+
+                    // Time column
+                    const timeCell = document.createElement("td");
+                    timeCell.textContent =
+                        population.creatures[score.indice].time;
+                    row.appendChild(timeCell);
+
+                    // Median column
+                    const medianCell = document.createElement("td");
+                    medianCell.textContent = population.creatures[score.indice]
+                        .median()
+                        .toFixed(4);
+                    row.appendChild(medianCell);
+
+                    // Creature generation column
+                    const generationCell = document.createElement("td");
+                    generationCell.textContent = population.generation;
+                    row.appendChild(generationCell);
+
+                    tableBody.appendChild(row);
+                });
+            }
+        </script>
+    </body>
+</html>
