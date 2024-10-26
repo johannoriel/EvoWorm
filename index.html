@@ -133,6 +133,7 @@
             arena.generate(10, 50); // 10 boxes of size 50
             let population = new Population(populationSize, 0.1);
             updateStats();
+            population.getBest().processScore(true, canvas, 0.00001);
 
             startButton.addEventListener("click", () => {
                 isRunning = true;
