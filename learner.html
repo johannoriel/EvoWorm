@@ -1,0 +1,757 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+
+        <style>
+            .container {
+                display: flex;
+                gap: 20px;
+                padding: 20px;
+            }
+
+            .left-panel {
+                flex: 1;
+            }
+
+            .parameters {
+                background: #f5f5f5;
+                padding: 15px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+
+            .grid {
+                display: grid;
+                gap: 1px;
+                background: #ccc;
+                border: 1px solid #999;
+                width: fit-content;
+            }
+
+            .grid-cell {
+                width: 20px;
+                height: 20px;
+                background: white;
+                border: none;
+            }
+
+            .grid-cell.active {
+                background: black;
+            }
+
+            .controls {
+                margin: 20px 0;
+            }
+
+            .symbol-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin: 10px 0;
+            }
+
+            .symbol-match {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin: 10px 0;
+            }
+
+            .stored-symbol {
+                border: 1px solid #ccc;
+                padding: 5px;
+                cursor: pointer;
+            }
+
+            .stored-symbol:hover {
+                background: #f0f0f0;
+            }
+
+            .charts {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+                overflow-x: auto;
+            }
+
+            .symbol-chart {
+                border: 1px solid #ccc;
+                padding: 10px;
+            }
+
+            .network-viz {
+                margin-top: 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .layer-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            .layer-title {
+                font-weight: bold;
+                margin: 10px 0;
+            }
+            .neurons-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+                max-height: 600px;
+                overflow-y: auto;
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            Reconnaissance de Formes - Réseau Neuronal - version 1 corrigée et
+            fonctionnelle par Claude
+        </div>
+        <div class="container">
+            <div class="left-panel">
+                <div class="parameters">
+                    <label
+                        >Taille de la grille (N):
+                        <input
+                            type="number"
+                            id="gridSize"
+                            value="5"
+                            min="5"
+                            max="20" /></label
+                    ><br /><br />
+                    <label
+                        >Nombre maximum de symboles:
+                        <input
+                            type="number"
+                            id="maxSymbols"
+                            value="3"
+                            min="1"
+                            max="20" /></label
+                    ><br />
+                    <label
+                        >Facteur couche cachée:
+                        <input
+                            type="number"
+                            id="hiddenFactor"
+                            value="1.5"
+                            min="0.1"
+                            step="0.1" /></label
+                    ><br />
+                    <label
+                        >Taux d'apprentissage:
+                        <input
+                            type="number"
+                            id="learningRate"
+                            value="0.1"
+                            min="0.001"
+                            max="1"
+                            step="0.001" /></label
+                    ><br />
+                    <label
+                        >Époques:
+                        <input
+                            type="number"
+                            id="epochs"
+                            value="100"
+                            min="1" /></label
+                    ><br />
+                    <label
+                        >Dropout (0-1):
+                        <input
+                            type="number"
+                            id="dropout"
+                            value="0.1"
+                            min="0"
+                            max="1"
+                            step="0.1" /></label
+                    ><br />
+                    <label
+                        >Régularisation L2:
+                        <input
+                            type="number"
+                            id="l2"
+                            value="0.001"
+                            min="0"
+                            step="0.001" /></label
+                    ><br /><br />
+                    <button onclick="resetNetwork()">Réinitialiser</button>
+                </div>
+
+                <div id="grid" class="grid"></div>
+
+                <div class="controls">
+                    <input
+                        type="text"
+                        id="symbolInput"
+                        placeholder="Symbole à stocker"
+                        maxlength="1"
+                    />
+                    <button onclick="storeSymbol()">Stocker</button>
+                    <button onclick="startTeaching()">Enseigner</button>
+                    <button onclick="clearGrid()">Effacer</button>
+                    <button onclick="recognize()">Reconnaître</button>
+                </div>
+
+                <div id="symbolList" class="symbol-list"></div>
+                <div id="symbolMatch" class="symbol-match">Reconnaissance</div>
+                <div id="charts" class="charts"></div>
+            </div>
+
+            <div id="networkViz" class="network-viz"></div>
+        </div>
+
+        <script>
+            // Réseau de neurones
+            class NeuralNetwork {
+                constructor(inputSize, hiddenSize, outputSize) {
+                    this.inputSize = inputSize;
+                    this.hiddenSize = hiddenSize;
+                    this.outputSize = outputSize;
+
+                    // Initialisation des poids avec Xavier/Glorot
+                    const xavierInit = (gridSize) => Math.sqrt(2.0 / gridSize);
+
+                    this.weightsIH = new Array(inputSize)
+                        .fill(0)
+                        .map(() =>
+                            new Array(hiddenSize)
+                                .fill(0)
+                                .map(
+                                    () =>
+                                        (Math.random() * 2 - 1) *
+                                        xavierInit(inputSize),
+                                ),
+                        );
+
+                    this.weightsHO = new Array(hiddenSize)
+                        .fill(0)
+                        .map(() =>
+                            new Array(outputSize)
+                                .fill(0)
+                                .map(
+                                    () =>
+                                        (Math.random() * 2 - 1) *
+                                        xavierInit(hiddenSize),
+                                ),
+                        );
+
+                    this.biasH = new Array(hiddenSize)
+                        .fill(0)
+                        .map(
+                            () =>
+                                (Math.random() * 2 - 1) * xavierInit(inputSize),
+                        );
+
+                    this.biasO = new Array(outputSize)
+                        .fill(0)
+                        .map(
+                            () =>
+                                (Math.random() * 2 - 1) *
+                                xavierInit(hiddenSize),
+                        );
+                }
+
+                sigmoid(x) {
+                    return 1 / (1 + Math.exp(-x));
+                }
+
+                sigmoidDerivative(x) {
+                    return x * (1 - x);
+                }
+
+                forward(input, dropout = 0) {
+                    // Couche cachée avec dropout
+                    this.hidden = new Array(this.hiddenSize).fill(0);
+                    for (let i = 0; i < this.hiddenSize; i++) {
+                        if (Math.random() > dropout) {
+                            for (let j = 0; j < this.inputSize; j++) {
+                                this.hidden[i] +=
+                                    input[j] * this.weightsIH[j][i];
+                            }
+                            this.hidden[i] = this.sigmoid(
+                                this.hidden[i] + this.biasH[i],
+                            );
+                        }
+                    }
+
+                    // Couche de sortie
+                    this.output = new Array(this.outputSize).fill(0);
+                    for (let i = 0; i < this.outputSize; i++) {
+                        for (let j = 0; j < this.hiddenSize; j++) {
+                            this.output[i] +=
+                                this.hidden[j] * this.weightsHO[j][i];
+                        }
+                        this.output[i] = this.sigmoid(
+                            this.output[i] + this.biasO[i],
+                        );
+                    }
+
+                    return this.output;
+                }
+
+                backward(input, target, learningRate, l2 = 0) {
+                    // Calcul de l'erreur de sortie
+                    const outputErrors = new Array(this.outputSize).fill(0);
+                    for (let i = 0; i < this.outputSize; i++) {
+                        outputErrors[i] =
+                            (target[i] - this.output[i]) *
+                            this.sigmoidDerivative(this.output[i]);
+                    }
+
+                    // Calcul de l'erreur de la couche cachée
+                    const hiddenErrors = new Array(this.hiddenSize).fill(0);
+                    for (let i = 0; i < this.hiddenSize; i++) {
+                        for (let j = 0; j < this.outputSize; j++) {
+                            hiddenErrors[i] +=
+                                outputErrors[j] * this.weightsHO[i][j];
+                        }
+                        hiddenErrors[i] *= this.sigmoidDerivative(
+                            this.hidden[i],
+                        );
+                    }
+
+                    // Mise à jour des poids avec régularisation L2
+                    for (let i = 0; i < this.hiddenSize; i++) {
+                        for (let j = 0; j < this.outputSize; j++) {
+                            const delta =
+                                learningRate *
+                                (outputErrors[j] * this.hidden[i] -
+                                    l2 * this.weightsHO[i][j]);
+                            this.weightsHO[i][j] += delta;
+                        }
+                    }
+
+                    for (let i = 0; i < this.inputSize; i++) {
+                        for (let j = 0; j < this.hiddenSize; j++) {
+                            const delta =
+                                learningRate *
+                                (hiddenErrors[j] * input[i] -
+                                    l2 * this.weightsIH[i][j]);
+                            this.weightsIH[i][j] += delta;
+                        }
+                    }
+
+                    // Mise à jour des biais
+                    for (let i = 0; i < this.outputSize; i++) {
+                        this.biasO[i] += learningRate * outputErrors[i];
+                    }
+
+                    for (let i = 0; i < this.hiddenSize; i++) {
+                        this.biasH[i] += learningRate * hiddenErrors[i];
+                    }
+
+                    // Calcul de l'erreur moyenne quadratique
+                    return (
+                        outputErrors.reduce((acc, err) => acc + err * err, 0) /
+                        outputErrors.length
+                    );
+                }
+            }
+
+            /*******************/
+
+            // Structures de données
+            let network = null;
+            let storedSymbols = []; // {symbol: string, grid: number[], error: number[]}
+
+            // Initialisation de la grille
+            function initGrid() {
+                const gridSize = parseInt(
+                    document.getElementById("gridSize").value,
+                );
+                const grid = document.getElementById("grid");
+                grid.style.gridTemplateColumns = `repeat(${gridSize}, 20px)`;
+                grid.innerHTML = "";
+
+                for (let i = 0; i < gridSize * gridSize; i++) {
+                    const cell = document.createElement("div");
+                    cell.className = "grid-cell";
+                    cell.addEventListener("mousedown", () => toggleCell(cell));
+                    cell.addEventListener("mouseover", (e) => {
+                        if (e.buttons === 1) toggleCell(cell);
+                    });
+                    grid.appendChild(cell);
+                }
+            }
+
+            // Gestion des cellules
+            function toggleCell(cell) {
+                cell.classList.toggle("active");
+            }
+
+            function clearGrid() {
+                document.querySelectorAll(".grid-cell").forEach((cell) => {
+                    cell.classList.remove("active");
+                });
+            }
+
+            // Stockage des symboles
+            function storeSymbol() {
+                const symbol = document.getElementById("symbolInput").value;
+                if (!symbol) {
+                    alert("Veuillez entrer un symbole");
+                    return;
+                }
+
+                const grid = Array.from(
+                    document.querySelectorAll(".grid-cell"),
+                ).map((cell) => (cell.classList.contains("active") ? 1 : 0));
+
+                if (!grid.some((v) => v === 1)) {
+                    alert("Veuillez dessiner quelque chose");
+                    return;
+                }
+
+                storedSymbols.push({
+                    symbol,
+                    grid,
+                    error: [],
+                });
+
+                updateSymbolList();
+                clearGrid();
+                document.getElementById("symbolInput").value = "";
+            }
+
+            // Mise à jour de la liste des symboles
+            function updateSymbolList() {
+                const list = document.getElementById("symbolList");
+                list.innerHTML = "";
+
+                storedSymbols.forEach((item, index) => {
+                    const div = document.createElement("div");
+                    div.className = "stored-symbol";
+                    div.textContent = item.symbol;
+                    div.addEventListener("click", () => loadSymbol(index));
+                    list.appendChild(div);
+                });
+
+                updateCharts();
+            }
+
+            // Chargement d'un symbole
+            function loadSymbol(index) {
+                const symbol = storedSymbols[index];
+                const cells = document.querySelectorAll(".grid-cell");
+
+                symbol.grid.forEach((value, i) => {
+                    cells[i].classList.toggle("active", value === 1);
+                });
+            }
+
+            // Mise à jour des graphiques
+            function updateCharts() {
+                const charts = document.getElementById("charts");
+                charts.innerHTML = "";
+
+                storedSymbols.forEach((symbol) => {
+                    const chart = document.createElement("div");
+                    chart.className = "symbol-chart";
+                    chart.innerHTML = `
+                  <h4>Erreur pour le symbole "${symbol.symbol}"</h4>
+                  <canvas></canvas>
+                `;
+                    charts.appendChild(chart);
+                });
+            }
+
+            // Fonction d'apprentissage
+            async function startTeaching() {
+                if (storedSymbols.length < 2) {
+                    alert(
+                        "Il faut au moins 2 symboles pour commencer l'apprentissage",
+                    );
+                    return;
+                }
+
+                const gridSize = parseInt(
+                    document.getElementById("gridSize").value,
+                );
+                const hiddenFactor = parseFloat(
+                    document.getElementById("hiddenFactor").value,
+                );
+                const learningRate = parseFloat(
+                    document.getElementById("learningRate").value,
+                );
+                const epochs = parseInt(
+                    document.getElementById("epochs").value,
+                );
+                const dropout = parseFloat(
+                    document.getElementById("dropout").value,
+                );
+                const l2 = parseFloat(document.getElementById("l2").value);
+
+                // Initialisation du réseau si nécessaire
+                if (!network) {
+                    const inputSize = gridSize * gridSize;
+                    const hiddenSize = Math.floor(inputSize * hiddenFactor);
+                    const outputSize = storedSymbols.length;
+                    network = new NeuralNetwork(
+                        inputSize,
+                        hiddenSize,
+                        outputSize,
+                    );
+                }
+
+                // Boucle d'apprentissage
+                for (let epoch = 0; epoch < epochs; epoch++) {
+                    // Mélange aléatoire des symboles à chaque époque
+                    const shuffledSymbols = [...storedSymbols].sort(
+                        () => Math.random() - 0.5,
+                    );
+
+                    for (const storedSymbol of shuffledSymbols) {
+                        // Création du vecteur cible
+                        const target = new Array(storedSymbols.length).fill(0);
+                        target[
+                            storedSymbols.findIndex(
+                                (s) => s.symbol === storedSymbol.symbol,
+                            )
+                        ] = 1;
+
+                        // Propagation avant et arrière
+                        network.forward(storedSymbol.grid, dropout);
+                        const error = network.backward(
+                            storedSymbol.grid,
+                            target,
+                            learningRate,
+                            l2,
+                        );
+
+                        // Stockage de l'erreur
+                        storedSymbol.error.push(error);
+                    }
+
+                    // Mise à jour des graphiques toutes les 10 époques
+                    if (epoch % 10 === 0) {
+                        updateCharts();
+                        // Petite pause pour permettre à l'UI de se mettre à jour
+                        await new Promise((resolve) => setTimeout(resolve, 0));
+                    }
+                }
+
+                updateNetworkVisualization();
+                updateCharts();
+            }
+
+            // Fonction de reconnaissance
+            function recognize() {
+                if (!network) {
+                    alert("Le réseau doit d'abord être entraîné");
+                    return;
+                }
+
+                const grid = Array.from(
+                    document.querySelectorAll(".grid-cell"),
+                ).map((cell) => (cell.classList.contains("active") ? 1 : 0));
+
+                // Suite de la fonction recognize()
+                const output = network.forward(grid);
+                const maxIndex = output.indexOf(Math.max(...output));
+                const recognizedSymbol = storedSymbols[maxIndex];
+
+                // Affichage des probabilités pour chaque symbole
+                const probabilities = document.getElementById("symbolMatch");
+                probabilities.innerHTML = `<h4>Probabilités de reconnaissance:</h4>`;
+                output.forEach((prob, i) => {
+                    probabilities.innerHTML += `<div>${storedSymbols[i].symbol}: ${(prob * 100).toFixed(1)}%</div>`;
+                });
+            }
+
+            // Fonction de réinitialisation du réseau
+            function resetNetwork() {
+                network = null;
+                storedSymbols = [];
+                updateSymbolList();
+                clearGrid();
+
+                const gridSize = parseInt(
+                    document.getElementById("gridSize").value,
+                );
+                initGrid(gridSize);
+            }
+
+            // Fonction pour dessiner les graphiques d'erreur
+            function drawErrorChart(canvas, errors, symbol) {
+                const ctx = canvas.getContext("2d");
+                const width = (canvas.width = 300);
+                const height = (canvas.height = 100);
+
+                ctx.clearRect(0, 0, width, height);
+
+                // Trouver le max pour l'échelle
+                const maxError = Math.max(...errors);
+
+                // Dessiner les axes
+                ctx.beginPath();
+                ctx.strokeStyle = "#999";
+                ctx.moveTo(0, height - 10);
+                ctx.lineTo(width, height - 10);
+                ctx.stroke();
+
+                // Dessiner la courbe d'erreur
+                ctx.beginPath();
+                ctx.strokeStyle = "#00f";
+                errors.forEach((error, i) => {
+                    const x = (i / errors.length) * width;
+                    const y = height - 10 - (error / maxError) * (height - 20);
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.stroke();
+
+                // Ajouter les étiquettes
+                ctx.fillStyle = "#000";
+                ctx.font = "10px Arial";
+                ctx.fillText("0", 5, height - 2);
+                ctx.fillText(maxError.toFixed(4), 5, 10);
+            }
+
+            // Fonction de mise à jour des graphiques
+            function updateCharts() {
+                const charts = document.getElementById("charts");
+                charts.innerHTML = "";
+
+                storedSymbols.forEach((symbol) => {
+                    const chartDiv = document.createElement("div");
+                    chartDiv.className = "symbol-chart";
+
+                    const title = document.createElement("h4");
+                    title.textContent = `Erreur pour le symbole "${symbol.symbol}"`;
+
+                    const canvas = document.createElement("canvas");
+
+                    chartDiv.appendChild(title);
+                    chartDiv.appendChild(canvas);
+                    charts.appendChild(chartDiv);
+
+                    if (symbol.error.length > 0) {
+                        drawErrorChart(canvas, symbol.error, symbol.symbol);
+                    }
+                });
+            }
+
+            // Mise en place des événements souris pour le dessin
+            function setupDrawing() {
+                let isDrawing = false;
+
+                document
+                    .getElementById("grid")
+                    .addEventListener("mousedown", () => {
+                        isDrawing = true;
+                    });
+
+                document.addEventListener("mouseup", () => {
+                    isDrawing = false;
+                });
+
+                document.addEventListener("mouseleave", () => {
+                    isDrawing = false;
+                });
+            }
+
+            // Initialisation au chargement
+            window.onload = function () {
+                initGrid();
+                setupDrawing();
+
+                // Écouter les changements de taille de grille
+                document
+                    .getElementById("gridSize")
+                    .addEventListener("change", () => {
+                        resetNetwork();
+                    });
+            };
+
+            function drawNeuronWeights(canvas, weights, gridSize) {
+                const ctx = canvas.getContext("2d");
+                const cellSize = canvas.width / gridSize;
+
+                // Trouver le max absolu des poids pour la normalisation
+                const maxAbsWeight = Math.max(...weights.map(Math.abs));
+
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const weight = weights[i * gridSize + j];
+                        const normalizedWeight = weight / maxAbsWeight;
+
+                        // Rouge pour négatif, bleu pour positif
+                        let color;
+                        if (weight > 0) {
+                            color = `rgb(0, 0, ${Math.floor(normalizedWeight * 255)})`;
+                        } else {
+                            color = `rgb(${Math.floor(-normalizedWeight * 255)}, 0, 0)`;
+                        }
+
+                        ctx.fillStyle = color;
+                        ctx.fillRect(
+                            j * cellSize,
+                            i * cellSize,
+                            cellSize,
+                            cellSize,
+                        );
+                    }
+                }
+            }
+
+            function updateNetworkVisualization() {
+                const gridSize = parseInt(
+                    document.getElementById("gridSize").value,
+                );
+                const viz = document.getElementById("networkViz");
+                viz.innerHTML = "";
+
+                // Configuration pour les canvas
+                const canvasSize = 100; // taille en pixels de chaque canvas
+
+                // Créer les conteneurs de couches
+                const layers = [
+                    { name: "Cachée", weights: network.weightsIH },
+                    { name: "Sortie", weights: network.weightsHO },
+                ];
+
+                layers.forEach((layer, layerIndex) => {
+                    const layerContainer = document.createElement("div");
+                    layerContainer.className = "layer-container";
+
+                    const title = document.createElement("div");
+                    title.className = "layer-title";
+                    title.textContent = `Couche ${layer.name}`;
+                    layerContainer.appendChild(title);
+
+                    const neuronsContainer = document.createElement("div");
+                    neuronsContainer.className = "neurons-grid";
+
+                    // Pour chaque neurone dans la couche
+                    for (let i = 0; i < layer.weights[0].length; i++) {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = canvasSize;
+                        canvas.height = canvasSize;
+
+                        // Extraire les poids pour ce neurone
+                        const neuronWeights =
+                            layerIndex === 0
+                                ? layer.weights.map((row) => row[i]) // première couche
+                                : layer.weights[i]; // deuxième couche
+
+                        // Dessiner les poids
+                        drawNeuronWeights(canvas, neuronWeights, gridSize);
+
+                        neuronsContainer.appendChild(canvas);
+                    }
+
+                    layerContainer.appendChild(neuronsContainer);
+                    viz.appendChild(layerContainer);
+                });
+            }
+        </script>
+    </body>
+</html>
