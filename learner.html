@@ -2,7 +2,10 @@
 <html>
     <head>
         <meta charset="utf-8" />
-
+        <title>
+            Reconnaissance de Formes - Réseau Neuronal - version 1 corrigée et
+            fonctionnelle par Claude
+        </title>
         <style>
             .container {
                 display: flex;
@@ -108,10 +111,7 @@
         </style>
     </head>
     <body>
-        <div>
-            Reconnaissance de Formes - Réseau Neuronal - version 1 corrigée et
-            fonctionnelle par Claude
-        </div>
+        <h1>Reconnaissance de Formes - Réseau Neuronal</h1>
         <div class="container">
             <div class="left-panel">
                 <div class="parameters">
@@ -199,10 +199,11 @@
 
                 <div id="symbolList" class="symbol-list"></div>
                 <div id="symbolMatch" class="symbol-match">Reconnaissance</div>
-                <div id="charts" class="charts"></div>
             </div>
-
-            <div id="networkViz" class="network-viz"></div>
+            <div>
+                <div id="charts" class="charts"></div>
+                <div id="networkViz" class="network-viz"></div>
+            </div>
         </div>
 
         <script>
