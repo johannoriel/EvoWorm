@@ -1,210 +1,392 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <title>Démo Perceptron Interactif</title>
-  <style>
-    canvas {
-      border: 1px solid #ccc;
-      margin: 10px;
-      cursor: crosshair;
-    }
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      padding: 20px;
-    }
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 400px;
-    }
-    .visualization {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .perceptron-viz {
-      border: 1px solid #ccc;
-      padding: 20px;
-      margin: 10px;
-      border-radius: 5px;
-    }
-    button {
-      padding: 8px 16px;
-      margin: 5px;
-    }
-    button.active {
-      background-color: #4CAF50;
-      color: white;
-    }
-    .parameter-slider {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #f5f5f5;
-      border-radius: 5px;
-    }
-    .slider-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .slider-row input[type="range"] {
-      flex: 1;
-    }
-    .calculation-box {
-      font-family: monospace;
-      background-color: #f8f8f8;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 10px 0;
-    }
-    .error-display {
-      font-size: 1.2em;
-      padding: 10px;
-      margin: 10px 0;
-      background-color: #fff3f3;
-      border-radius: 5px;
-      border-left: 4px solid #ff4444;
-    }
-    .highlight {
-      background-color: #ffeb3b;
-      padding: 2px 4px;
-      border-radius: 3px;
-    }
-    #currentMode {
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #f0f0f0;
-      border-radius: 5px;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="controls">
-      <h2>Contrôle du Perceptron</h2>
-      <div class="parameter-slider">
-        <h3>Paramètres ajustables</h3>
-        <div class="slider-row">
-          <label>w₁:</label>
-          <input type="range" id="w1" min="-2" max="2" step="0.1" value="0.5">
-          <span id="w1Value">0.5</span>
+    <head>
+        <title>Démo Perceptron Interactif</title>
+        <style>
+            canvas {
+                border: 1px solid #ccc;
+                margin: 10px;
+                cursor: crosshair;
+            }
+            .container {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 20px;
+                padding: 20px;
+            }
+            .controls {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                min-width: 400px;
+            }
+            .visualization {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .perceptron-viz {
+                border: 1px solid #ccc;
+                padding: 20px;
+                margin: 10px;
+                border-radius: 5px;
+            }
+            button {
+                padding: 8px 16px;
+                margin: 5px;
+            }
+            button.active {
+                background-color: #4caf50;
+                color: white;
+            }
+            .parameter-slider {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                margin: 10px 0;
+                padding: 10px;
+                background-color: #f5f5f5;
+                border-radius: 5px;
+            }
+            .slider-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .slider-row input[type="range"] {
+                flex: 1;
+            }
+            .calculation-box {
+                font-family: monospace;
+                background-color: #f8f8f8;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 10px 0;
+            }
+            .error-display {
+                font-size: 1.2em;
+                padding: 10px;
+                margin: 10px 0;
+                background-color: #fff3f3;
+                border-radius: 5px;
+                border-left: 4px solid #ff4444;
+            }
+            .highlight {
+                background-color: #ffeb3b;
+                padding: 2px 4px;
+                border-radius: 3px;
+            }
+            #currentMode {
+                margin: 10px 0;
+                padding: 10px;
+                background-color: #f0f0f0;
+                border-radius: 5px;
+                text-align: center;
+            }
+            .tooltip {
+                position: relative;
+                display: inline-block;
+            }
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 240px;
+                background-color: black;
+                color: #fff;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+                position: absolute;
+                z-index: 1;
+                bottom: 150%;
+                left: 50%;
+                margin-left: -60px;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+                opacity: 1;
+            }
+            details p {
+                max-width: 400px;
+                margin: 0 auto;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="controls">
+                <details>
+                    <summary>À propos du simulateur de perceptron</summary>
+                    <p>
+                        Ceci est un simulateur de perceptron simple, qui est le
+                        type le plus basique de réseau de neurones artificiels.
+                        Un perceptron est un classificateur binaire qui prend
+                        deux valeurs d'entrée, applique un ensemble de poids et
+                        un biais, et produit une classification de l'entrée
+                        comme appartenant à la Classe 1 ou à la Classe 2.
+                    </p>
+                    <p>
+                        L'objectif du perceptron est de trouver les poids et le
+                        biais optimaux qui minimisent l'erreur totale dans la
+                        classification des points d'entrée. Vous pouvez ajuster
+                        les poids, le biais et le taux d'apprentissage à l'aide
+                        des curseurs de gauche, et ajouter de nouveaux points
+                        aux catégories Classe 1 (rouge) et Classe 2 (bleue) en
+                        cliquant et en faisant glisser sur le canvas.
+                    </p>
+                </details>
+                <h2>Contrôle du Perceptron</h2>
+                <div class="parameter-slider">
+                    <h3>Paramètres ajustables</h3>
+                    <div class="tooltip">
+                        <div class="slider-row">
+                            <label>w₁:</label>
+                            <input
+                                type="range"
+                                id="w1"
+                                min="-2"
+                                max="2"
+                                step="0.1"
+                                value="0.5"
+                            />
+                            <span id="w1Value">0.5</span>
+                            <span class="tooltiptext"
+                                >Ajuste le poids de la première entrée du
+                                perceptron.</span
+                            >
+                        </div>
+                    </div>
+                    <div class="tooltip">
+                        <div class="slider-row">
+                            <label>w₂:</label>
+                            <input
+                                type="range"
+                                id="w2"
+                                min="-2"
+                                max="2"
+                                step="0.1"
+                                value="0.5"
+                            />
+                            <span id="w2Value">0.5</span
+                            ><span class="tooltiptext"
+                                >Ajuste le poids de la deuxième entrée du
+                                perceptron.</span
+                            >
+                        </div>
+                    </div>
+                    <div class="tooltip">
+                        <div class="slider-row">
+                            <label>biais:</label>
+                            <input
+                                type="range"
+                                id="bias"
+                                min="-2"
+                                max="2"
+                                step="0.1"
+                                value="0"
+                            />
+                            <span id="biasValue">0</span
+                            ><span class="tooltiptext"
+                                >Ajuste le biais du perceptron.</span
+                            >
+                        </div>
+                    </div>
+                    <div class="tooltip">
+                        <div class="slider-row">
+                            <label>Learning rate:</label>
+                            <input
+                                type="range"
+                                id="learningRate"
+                                min="0.01"
+                                max="1"
+                                step="0.01"
+                                value="0.1"
+                            />
+                            <span id="learningRateValue">0.1</span
+                            ><span class="tooltiptext"
+                                >Ajuste le taux d'apprentissage du
+                                perceptron.</span
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div class="calculation-box">
+                    <div id="currentCalculation">
+                        Passez la souris sur le canvas...
+                    </div>
+                </div>
+
+                <div class="error-display">
+                    Erreur totale: <span id="totalError">0</span>
+                </div>
+
+                <div class="tooltip">
+                    <button id="addClass1" onclick="togglePointMode(1)">
+                        Ajouter Points Classe 1 (Rouge)</button
+                    ><span class="tooltiptext"
+                        >Permet d'ajouter des points de la première classe (en
+                        rouge) sur le canvas.</span
+                    >
+                </div>
+                <div class="tooltip">
+                    <button id="addClass2" onclick="togglePointMode(-1)">
+                        Ajouter Points Classe 2 (Bleu)</button
+                    ><span class="tooltiptext"
+                        >Permet d'ajouter des points de la deuxième classe (en
+                        bleu) sur le canvas.</span
+                    >
+                </div>
+                <div class="tooltip">
+                    <button onclick="train()">Entraîner</button
+                    ><span class="tooltiptext"
+                        >Lance l'entraînement du perceptron sur les points
+                        ajoutés.</span
+                    >
+                </div>
+                <div class="tooltip">
+                    <button onclick="reset()">Réinitialiser</button
+                    ><span class="tooltiptext"
+                        >Efface tous les points du canvas et réinitialise les
+                        paramètres du perceptron.</span
+                    >
+                </div>
+
+                <div id="currentMode">Mode: Observation</div>
+            </div>
+
+            <div class="visualization">
+                <h2>Visualisation</h2>
+                <canvas id="perceptronCanvas" width="400" height="400"></canvas>
+                <details>
+                    <summary>Plus d'explication sur la classification</summary>
+                    <p>
+                        Lorsqu'on travaille avec deux caractéristiques en
+                        entrée, la frontière de décision est une ligne dans un
+                        plan bidimensionnel. Chaque côté de cette ligne
+                        correspond à l'une des classes. L'équation de la ligne
+                        est dérivée des poids assignés à ces caractéristiques et
+                        du biais. Elle peut être représentée mathématiquement
+                        comme suit : (w1⋅x1)+(w2⋅x2)+b=0 Ici, w1 et w2 sont les
+                        poids, x1 et x2 les caractéristiques en entrée, et b est
+                        le biais.
+                    </p>
+                    <p>&nbsp;</p>
+                    <p>
+                        S'il y a trois caractéristiques en entrée, la frontière
+                        de décision devient un plan dans un espace
+                        tridimensionnel. Le perceptron utilise alors ces trois
+                        caractéristiques pour déterminer de quel côté du plan se
+                        situe un point d'entrée. L'équation de ce plan est :
+                        (w1⋅x1)+(w2⋅x2)+(w3⋅x3)+b=0 Dans cette équation, w3 et
+                        x3 représentent respectivement le poids et la valeur de
+                        la troisième caractéristique. Les points d'un côté du
+                        plan sont classés dans une catégorie, et ceux de l'autre
+                        côté dans une autre. Cette approche géométrique permet
+                        au perceptron de classer les points de données en
+                        fonction de leur position par rapport à la frontière de
+                        décision, qu'il s'agisse d'une ligne ou d'un plan. Au
+                        fur et à mesure que le nombre de dimensions
+                        (caractéristiques en entrée) augmente, cette frontière
+                        devient un hyperplan dans des espaces de dimensions
+                        supérieures.
+                    </p>
+                    <p>&nbsp;</p>
+                    <p>
+                        Cependant, il est important de noter que, quel que soit
+                        le nombre de caractéristiques en entrée et la
+                        dimensionnalité de l'espace des caractéristiques, le
+                        perceptron reste un classificateur linéaire. Cela
+                        signifie qu'il ne peut classer que des données qui sont
+                        linéairement séparables. Dans les cas où les données ne
+                        sont pas linéairement séparables, un perceptron simple
+                        ne sera pas suffisant, et des modèles ou architectures
+                        plus complexes, comme des réseaux multicouches ou des
+                        classificateurs non linéaires, peuvent être nécessaires
+                        pour obtenir une classification précise.
+                    </p>
+                </details>
+            </div>
         </div>
-        <div class="slider-row">
-          <label>w₂:</label>
-          <input type="range" id="w2" min="-2" max="2" step="0.1" value="0.5">
-          <span id="w2Value">0.5</span>
-        </div>
-        <div class="slider-row">
-          <label>biais:</label>
-          <input type="range" id="bias" min="-2" max="2" step="0.1" value="0">
-          <span id="biasValue">0</span>
-        </div>
-        <div class="slider-row">
-          <label>Learning rate:</label>
-          <input type="range" id="learningRate" min="0.01" max="1" step="0.01" value="0.1">
-          <span id="learningRateValue">0.1</span>
-        </div>
-      </div>
 
-      <div class="calculation-box">
-        <div id="currentCalculation">Passez la souris sur le canvas...</div>
-      </div>
+        <script>
+            class Perceptron {
+                constructor(learningRate = 0.1) {
+                    this.weights = [0.5, 0.5];
+                    this.bias = 0;
+                    this.learningRate = learningRate;
+                }
 
-      <div class="error-display">
-        Erreur totale: <span id="totalError">0</span>
-      </div>
+                calculateSum(inputs) {
+                    return (
+                        inputs[0] * this.weights[0] +
+                        inputs[1] * this.weights[1] +
+                        this.bias
+                    );
+                }
 
-      <button id="addClass1" onclick="togglePointMode(1)">Ajouter Points Classe 1 (Rouge)</button>
-      <button id="addClass2" onclick="togglePointMode(-1)">Ajouter Points Classe 2 (Bleu)</button>
-      <button onclick="train()">Entraîner</button>
-      <button onclick="reset()">Réinitialiser</button>
-      
-      <div id="currentMode">Mode: Observation</div>
-    </div>
-    
-    <div class="visualization">
-      <h2>Visualisation</h2>
-      <canvas id="perceptronCanvas" width="400" height="400"></canvas>
-    </div>
-  </div>
+                predict(inputs) {
+                    return this.calculateSum(inputs) >= 0 ? 1 : -1;
+                }
 
-  <script>
-    class Perceptron {
-      constructor(learningRate = 0.1) {
-        this.weights = [0.5, 0.5];
-        this.bias = 0;
-        this.learningRate = learningRate;
-      }
-      
-      calculateSum(inputs) {
-        return inputs[0] * this.weights[0] + 
-               inputs[1] * this.weights[1] + 
-               this.bias;
-      }
-      
-      predict(inputs) {
-        return this.calculateSum(inputs) >= 0 ? 1 : -1;
-      }
-      
-      train(inputs, target) {
-        const prediction = this.predict(inputs);
-        const error = target - prediction;
-        
-        if(error !== 0) {
-          this.weights[0] += error * inputs[0] * this.learningRate;
-          this.weights[1] += error * inputs[1] * this.learningRate;
-          this.bias += error * this.learningRate;
-        }
-        
-        return error;
-      }
-    }
+                train(inputs, target) {
+                    const prediction = this.predict(inputs);
+                    const error = target - prediction;
 
-    const canvas = document.getElementById('perceptronCanvas');
-    const ctx = canvas.getContext('2d');
-    let perceptron = new Perceptron();
-    let points = [];
-    let isTraining = false;
-    let currentMode = null;
+                    if (error !== 0) {
+                        this.weights[0] +=
+                            error * inputs[0] * this.learningRate;
+                        this.weights[1] +=
+                            error * inputs[1] * this.learningRate;
+                        this.bias += error * this.learningRate;
+                    }
 
-    // Mise à jour des contrôles UI avec les paramètres du perceptron
-    function updateUIControls() {
-      document.getElementById('w1').value = perceptron.weights[0];
-      document.getElementById('w2').value = perceptron.weights[1];
-      document.getElementById('bias').value = perceptron.bias;
-      document.getElementById('w1Value').textContent = perceptron.weights[0].toFixed(2);
-      document.getElementById('w2Value').textContent = perceptron.weights[1].toFixed(2);
-      document.getElementById('biasValue').textContent = perceptron.bias.toFixed(2);
-    }
+                    return error;
+                }
+            }
 
-    // Calcul et affichage de l'erreur totale
-    function calculateTotalError() {
-      if (points.length === 0) return 0;
-      
-      let totalError = 0;
-      points.forEach(point => {
-        const prediction = perceptron.predict(point.inputs);
-        totalError += Math.abs(point.label - prediction);
-      });
-      
-      document.getElementById('totalError').textContent = totalError;
-      return totalError;
-    }
+            const canvas = document.getElementById("perceptronCanvas");
+            const ctx = canvas.getContext("2d");
+            let perceptron = new Perceptron();
+            let points = [];
+            let isTraining = false;
+            let currentMode = null;
 
-    // Mise à jour des calculs en temps réel
-    function updateCalculationDisplay(inputs, forceUpdate = false) {
-      if (!isTraining || forceUpdate) {
-        const sum = perceptron.calculateSum(inputs);
-        const prediction = sum >= 0 ? 1 : -1;
-        const html = `
+            // Mise à jour des contrôles UI avec les paramètres du perceptron
+            function updateUIControls() {
+                document.getElementById("w1").value = perceptron.weights[0];
+                document.getElementById("w2").value = perceptron.weights[1];
+                document.getElementById("bias").value = perceptron.bias;
+                document.getElementById("w1Value").textContent =
+                    perceptron.weights[0].toFixed(2);
+                document.getElementById("w2Value").textContent =
+                    perceptron.weights[1].toFixed(2);
+                document.getElementById("biasValue").textContent =
+                    perceptron.bias.toFixed(2);
+            }
+
+            // Calcul et affichage de l'erreur totale
+            function calculateTotalError() {
+                if (points.length === 0) return 0;
+
+                let totalError = 0;
+                points.forEach((point) => {
+                    const prediction = perceptron.predict(point.inputs);
+                    totalError += Math.abs(point.label - prediction);
+                });
+
+                document.getElementById("totalError").textContent = totalError;
+                return totalError;
+            }
+
+            // Mise à jour des calculs en temps réel
+            function updateCalculationDisplay(inputs, forceUpdate = false) {
+                if (!isTraining || forceUpdate) {
+                    const sum = perceptron.calculateSum(inputs);
+                    const prediction = sum >= 0 ? 1 : -1;
+                    const html = `
           <strong>Calculs détaillés:</strong><br>
           w₁ × x₁ = ${perceptron.weights[0].toFixed(2)} × ${inputs[0].toFixed(2)} = ${(perceptron.weights[0] * inputs[0]).toFixed(2)}<br>
           w₂ × x₂ = ${perceptron.weights[1].toFixed(2)} × ${inputs[1].toFixed(2)} = ${(perceptron.weights[1] * inputs[1]).toFixed(2)}<br>
@@ -212,175 +394,191 @@
           <br>
           somme = ${(perceptron.weights[0] * inputs[0]).toFixed(2)} + ${(perceptron.weights[1] * inputs[1]).toFixed(2)} + ${perceptron.bias.toFixed(2)} = ${sum.toFixed(2)}<br>
           <br>
-          sortie = ${sum.toFixed(2)} ${sum >= 0 ? '≥' : '<'} 0 → <span class="highlight">${prediction === 1 ? 'Rouge' : 'Bleu'}</span>
+          sortie = ${sum.toFixed(2)} ${sum >= 0 ? "≥" : "<"} 0 → <span class="highlight">${prediction === 1 ? "Rouge" : "Bleu"}</span>
         `;
-        document.getElementById('currentCalculation').innerHTML = html;
-      }
-    }
+                    document.getElementById("currentCalculation").innerHTML =
+                        html;
+                }
+            }
 
-    // Gestion des sliders
-    ['w1', 'w2', 'bias'].forEach(param => {
-      document.getElementById(param).addEventListener('input', function(e) {
-        const value = parseFloat(e.target.value);
-        document.getElementById(param + 'Value').textContent = value.toFixed(2);
-        
-        if(param === 'bias') {
-          perceptron.bias = value;
-        } else {
-          perceptron.weights[param === 'w1' ? 0 : 1] = value;
-        }
-        
-        calculateTotalError();
-        drawPerceptron();
-      });
-    });
+            // Gestion des sliders
+            ["w1", "w2", "bias"].forEach((param) => {
+                document
+                    .getElementById(param)
+                    .addEventListener("input", function (e) {
+                        const value = parseFloat(e.target.value);
+                        document.getElementById(param + "Value").textContent =
+                            value.toFixed(2);
 
-    document.getElementById('learningRate').addEventListener('input', function(e) {
-      const value = parseFloat(e.target.value);
-      document.getElementById('learningRateValue').textContent = value.toFixed(2);
-      perceptron.learningRate = value;
-    });
+                        if (param === "bias") {
+                            perceptron.bias = value;
+                        } else {
+                            perceptron.weights[param === "w1" ? 0 : 1] = value;
+                        }
 
-    function togglePointMode(label) {
-      const class1Btn = document.getElementById('addClass1');
-      const class2Btn = document.getElementById('addClass2');
-      const modeDisplay = document.getElementById('currentMode');
-      
-      if (currentMode === label) {
-        currentMode = null;
-        class1Btn.classList.remove('active');
-        class2Btn.classList.remove('active');
-        canvas.style.cursor = 'default';
-        modeDisplay.textContent = 'Mode: Observation';
-      } else {
-        currentMode = label;
-        class1Btn.classList.toggle('active', label === 1);
-        class2Btn.classList.toggle('active', label === -1);
-        canvas.style.cursor = 'crosshair';
-        modeDisplay.textContent = `Mode: Ajout points ${label === 1 ? 'rouges' : 'bleus'}`;
-      }
-    }
+                        calculateTotalError();
+                        drawPerceptron();
+                    });
+            });
 
-    canvas.addEventListener('mousemove', function(e) {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const inputs = canvasToPerceptron(x, y);
-      updateCalculationDisplay(inputs);
-    });
+            document
+                .getElementById("learningRate")
+                .addEventListener("input", function (e) {
+                    const value = parseFloat(e.target.value);
+                    document.getElementById("learningRateValue").textContent =
+                        value.toFixed(2);
+                    perceptron.learningRate = value;
+                });
 
-    canvas.addEventListener('click', function(e) {
-      if (currentMode !== null) {
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const inputs = canvasToPerceptron(x, y);
-        points.push({x, y, label: currentMode, inputs});
-        drawPerceptron();
-        calculateTotalError();
-      }
-    });
+            function togglePointMode(label) {
+                const class1Btn = document.getElementById("addClass1");
+                const class2Btn = document.getElementById("addClass2");
+                const modeDisplay = document.getElementById("currentMode");
 
-    function canvasToPerceptron(x, y) {
-      return [
-        (x - canvas.width/2) / (canvas.width/4),
-        -(y - canvas.height/2) / (canvas.height/4)
-      ];
-    }
+                if (currentMode === label) {
+                    currentMode = null;
+                    class1Btn.classList.remove("active");
+                    class2Btn.classList.remove("active");
+                    canvas.style.cursor = "default";
+                    modeDisplay.textContent = "Mode: Observation";
+                } else {
+                    currentMode = label;
+                    class1Btn.classList.toggle("active", label === 1);
+                    class2Btn.classList.toggle("active", label === -1);
+                    canvas.style.cursor = "crosshair";
+                    modeDisplay.textContent = `Mode: Ajout points ${label === 1 ? "rouges" : "bleus"}`;
+                }
+            }
 
-    function perceptronToCanvas(inputs) {
-      return [
-        inputs[0] * (canvas.width/4) + canvas.width/2,
-        -inputs[1] * (canvas.height/4) + canvas.height/2
-      ];
-    }
+            canvas.addEventListener("mousemove", function (e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const inputs = canvasToPerceptron(x, y);
+                updateCalculationDisplay(inputs);
+            });
 
-    function drawPoint(x, y, label) {
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = label === 1 ? 'red' : 'blue';
-      ctx.fill();
-      ctx.closePath();
-    }
+            canvas.addEventListener("click", function (e) {
+                if (currentMode !== null) {
+                    const rect = canvas.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const inputs = canvasToPerceptron(x, y);
+                    points.push({ x, y, label: currentMode, inputs });
+                    drawPerceptron();
+                    calculateTotalError();
+                }
+            });
 
-    function drawLine() {
-      const w1 = perceptron.weights[0];
-      const w2 = perceptron.weights[1];
-      const b = perceptron.bias;
-      
-      const x1 = -2;
-      const y1 = -(w1 * x1 + b) / w2;
-      const x2 = 2;
-      const y2 = -(w1 * x2 + b) / w2;
-      
-      const [canvasX1, canvasY1] = perceptronToCanvas([x1, y1]);
-      const [canvasX2, canvasY2] = perceptronToCanvas([x2, y2]);
-      
-      ctx.beginPath();
-      ctx.moveTo(canvasX1, canvasY1);
-      ctx.lineTo(canvasX2, canvasY2);
-      ctx.strokeStyle = 'black';
-      ctx.stroke();
-    }
+            function canvasToPerceptron(x, y) {
+                return [
+                    (x - canvas.width / 2) / (canvas.width / 4),
+                    -(y - canvas.height / 2) / (canvas.height / 4),
+                ];
+            }
 
-    function drawPerceptron() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Axes
-      ctx.beginPath();
-      ctx.moveTo(0, canvas.height/2);
-      ctx.lineTo(canvas.width, canvas.height/2);
-      ctx.moveTo(canvas.width/2, 0);
-      ctx.lineTo(canvas.width/2, canvas.height);
-      ctx.strokeStyle = '#ccc';
-      ctx.stroke();
-      
-      // Points
-      points.forEach(point => {
-        drawPoint(point.x, point.y, point.label);
-      });
-      
-      // Ligne de séparation
-      drawLine();
-      
-      // Mise à jour des contrôles
-      updateUIControls();
-    }
+            function perceptronToCanvas(inputs) {
+                return [
+                    inputs[0] * (canvas.width / 4) + canvas.width / 2,
+                    -inputs[1] * (canvas.height / 4) + canvas.height / 2,
+                ];
+            }
 
-    async function train() {
-      if (points.length === 0) return;
-      isTraining = true;
-      
-      for (let epoch = 0; epoch < 100; epoch++) {
-        let hasError = false;
-        
-        for (let point of points) {
-          const error = perceptron.train(point.inputs, point.label);
-          hasError = hasError || error !== 0;
-          drawPerceptron();
-          calculateTotalError();
-          updateCalculationDisplay(point.inputs, true);
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-        
-        if (!hasError) break;
-      }
-      
-      isTraining = false;
-    }
+            function drawPoint(x, y, label) {
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = label === 1 ? "red" : "blue";
+                ctx.fill();
+                ctx.closePath();
+            }
 
-    function reset() {
-      perceptron = new Perceptron(parseFloat(document.getElementById('learningRate').value));
-      points = [];
-      currentMode = null;
-      document.getElementById('addClass1').classList.remove('active');
-      document.getElementById('addClass2').classList.remove('active');
-      document.getElementById('currentMode').textContent = 'Mode: Observation';
-      drawPerceptron();
-      calculateTotalError();
-      document.getElementById('currentCalculation').innerHTML = 'Passez la souris sur le canvas...';
-    }
+            function drawLine() {
+                const w1 = perceptron.weights[0];
+                const w2 = perceptron.weights[1];
+                const b = perceptron.bias;
 
-    // Initialisation
-    drawPerceptron();
-  </script>
+                const x1 = -2;
+                const y1 = -(w1 * x1 + b) / w2;
+                const x2 = 2;
+                const y2 = -(w1 * x2 + b) / w2;
+
+                const [canvasX1, canvasY1] = perceptronToCanvas([x1, y1]);
+                const [canvasX2, canvasY2] = perceptronToCanvas([x2, y2]);
+
+                ctx.beginPath();
+                ctx.moveTo(canvasX1, canvasY1);
+                ctx.lineTo(canvasX2, canvasY2);
+                ctx.strokeStyle = "black";
+                ctx.stroke();
+            }
+
+            function drawPerceptron() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Axes
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.moveTo(canvas.width / 2, 0);
+                ctx.lineTo(canvas.width / 2, canvas.height);
+                ctx.strokeStyle = "#ccc";
+                ctx.stroke();
+
+                // Points
+                points.forEach((point) => {
+                    drawPoint(point.x, point.y, point.label);
+                });
+
+                // Ligne de séparation
+                drawLine();
+
+                // Mise à jour des contrôles
+                updateUIControls();
+            }
+
+            async function train() {
+                if (points.length === 0) return;
+                isTraining = true;
+
+                for (let epoch = 0; epoch < 100; epoch++) {
+                    let hasError = false;
+
+                    for (let point of points) {
+                        const error = perceptron.train(
+                            point.inputs,
+                            point.label,
+                        );
+                        hasError = hasError || error !== 0;
+                        drawPerceptron();
+                        calculateTotalError();
+                        updateCalculationDisplay(point.inputs, true);
+                        await new Promise((resolve) => setTimeout(resolve, 50));
+                    }
+
+                    if (!hasError) break;
+                }
+
+                isTraining = false;
+            }
+
+            function reset() {
+                perceptron = new Perceptron(
+                    parseFloat(document.getElementById("learningRate").value),
+                );
+                points = [];
+                currentMode = null;
+                document.getElementById("addClass1").classList.remove("active");
+                document.getElementById("addClass2").classList.remove("active");
+                document.getElementById("currentMode").textContent =
+                    "Mode: Observation";
+                drawPerceptron();
+                calculateTotalError();
+                document.getElementById("currentCalculation").innerHTML =
+                    "Passez la souris sur le canvas...";
+            }
+
+            // Initialisation
+            drawPerceptron();
+        </script>
+    </body>
+</html>
