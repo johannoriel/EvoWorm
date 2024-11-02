@@ -14,7 +14,10 @@
             }
 
             .left-panel {
-                flex: 1;
+                display: block;
+                width: 300px;
+                min-width: 300px;
+                max-width: 300px;
             }
 
             .parameters {
@@ -123,15 +126,6 @@
                             value="5"
                             min="5"
                             max="20" /></label
-                    ><br /><br />
-                    <label
-                        >Nombre maximum de symboles:
-                        <input
-                            type="number"
-                            id="maxSymbols"
-                            value="3"
-                            min="1"
-                            max="20" /></label
                     ><br />
                     <label
                         >Facteur couche cachée:
@@ -201,6 +195,15 @@
                 <div id="symbolMatch" class="symbol-match">Reconnaissance</div>
             </div>
             <div>
+                <details>
+                    <summary>À propos du réseau de neuronne (simple couche)</summary>
+                    <p> Le réseau de neuronne dans le cas présent est un MLP (Multi layer perceptron) à ne seule couche.
+                        <img src="https://www.researchgate.net/publication/354817375/figure/fig2/AS:1071622807097344@1632506195651/Multi-layer-perceptron-MLP-NN-basic-Architecture.jpg"
+                            Il ne dispose que d'une seule couche cachée mais le principe reste le même. Un neuronne est relié unique à ceux de la couche précédente et à tous ceux de la couche ciblée.
+                    </p>
+                    <p>
+                    </p>
+                </details>
                 <div id="charts" class="charts"></div>
                 <div id="networkViz" class="network-viz"></div>
             </div>
@@ -383,6 +386,7 @@
             // Gestion des cellules
             function toggleCell(cell) {
                 cell.classList.toggle("active");
+                if (network) recognize();
             }
 
             function clearGrid() {
@@ -463,9 +467,9 @@
 
             // Fonction d'apprentissage
             async function startTeaching() {
-                if (storedSymbols.length < 2) {
+                if (storedSymbols.length < 1) {
                     alert(
-                        "Il faut au moins 2 symboles pour commencer l'apprentissage",
+                        "Il faut au moins 1 symboles pour commencer l'apprentissage",
                     );
                     return;
                 }
@@ -670,7 +674,7 @@
                     .addEventListener("change", () => {
                         resetNetwork();
                     });
-            };
+           };
 
             function drawNeuronWeights(canvas, weights, gridSize) {
                 const ctx = canvas.getContext("2d");
