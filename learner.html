@@ -58,7 +58,7 @@
             }
 
             .symbol-match {
-                display: flex;
+                display: block;
                 flex-wrap: wrap;
                 gap: 10px;
                 margin: 10px 0;
@@ -214,9 +214,10 @@
             <div>
                 <details>
                     <summary>À propos du réseau de neuronne (simple couche)</summary>
-                    <p> Le réseau de neuronne dans le cas présent est un MLP (Multi layer perceptron) à ne seule couche.
-                        <img src="https://www.researchgate.net/publication/354817375/figure/fig2/AS:1071622807097344@1632506195651/Multi-layer-perceptron-MLP-NN-basic-Architecture.jpg"
-                            Il ne dispose que d'une seule couche cachée mais le principe reste le même. Un neuronne est relié unique à ceux de la couche précédente et à tous ceux de la couche ciblée.
+                    <img> Le réseau de neuronne dans le cas présent est un MLP (Multi layer perceptron) à ne seule couche.
+                    <img src="https://www.researchgate.net/publication/354817375/figure/fig2/AS:1071622807097344@1632506195651/Multi-layer-perceptron-MLP-NN-basic-Architecture.jpg"></img>
+                    <br><br>
+                    Il ne dispose que d'une seule couche cachée mais le principe reste le même. Un neuronne est relié unique à ceux de la couche précédente et à tous ceux de la couche ciblée.
                     </p>
                     <p>
                     </p>
@@ -225,13 +226,13 @@
                     <summary>Comment le réseau "apprends" ?</summary>
                     <p> Le réseau de neuronnes artificiels (ANN) apprends grâce à la rétropropagation. C'est de l'apprentissage dit "supervisé".
                         On corrige, par petites touches, la sortie pour qu'elle se rapproche le plus possible, progressivement, du résultat voulu, en modifiant les poids des derniers neuronnes, puis on applique la même procédure aux neuronnes des couches précédentes.
-                        <img src="https://penseeartificielle.fr/wp-content/uploads/2019/10/exemple-de-backpropagation.jpg"
-                            Il ne dispose que d'une seule couche cachée mais le principe reste le même. Un neuronne est relié unique à ceux de la couche précédente et à tous ceux de la couche ciblée.
-                            Le réseau de neurones artificiels (ANN) apprend grâce à l'algorithme de rétropropagation, un processus d'apprentissage supervisé. Cet algorithme ajuste progressivement les paramètres du réseau pour réduire l'écart entre la sortie actuelle et la sortie souhaitée.
-                                <br><br>
-                                Lors de chaque itération, la sortie calculée par le réseau est comparée au résultat attendu, et l'erreur est mesurée. Cette erreur est ensuite propagée en arrière, des couches de sortie vers les couches d'entrée, en modifiant les poids des connexions neuronales pour minimiser l'erreur. Les ajustements sont d'abord appliqués aux neurones de la couche de sortie, puis aux couches précédentes, de manière progressive.
-                                <br><br>
-                                Ce processus repose sur la dérivation et l'optimisation : chaque poids est modifié en fonction de la dérivée de l'erreur par rapport à ce poids, permettant ainsi un ajustement optimal qui minimise l'erreur globale. Même avec une seule couche cachée, le principe reste le même. Chaque neurone est connecté aux neurones de la couche précédente et de la couche suivante, permettant à l'erreur d'être rétropropagée efficacement dans tout le réseau.
+                        <img src="https://penseeartificielle.fr/wp-content/uploads/2019/10/exemple-de-backpropagation.jpg"></img>
+                        <br><br>
+                        Le réseau de neurones artificiels (ANN) apprend grâce à l'algorithme de rétropropagation, un processus d'apprentissage supervisé. Cet algorithme ajuste progressivement les paramètres du réseau pour réduire l'écart entre la sortie actuelle et la sortie souhaitée.
+                        <br><br>
+                        Lors de chaque itération, la sortie calculée par le réseau est comparée au résultat attendu, et l'erreur est mesurée. Cette erreur est ensuite propagée en arrière, des couches de sortie vers les couches d'entrée, en modifiant les poids des connexions neuronales pour minimiser l'erreur. Les ajustements sont d'abord appliqués aux neurones de la couche de sortie, puis aux couches précédentes, de manière progressive.
+                        <br><br>
+                        Ce processus repose sur la dérivation et l'optimisation : chaque poids est modifié en fonction de la dérivée de l'erreur par rapport à ce poids, permettant ainsi un ajustement optimal qui minimise l'erreur globale. Même avec une seule couche cachée, le principe reste le même. Chaque neurone est connecté aux neurones de la couche précédente et de la couche suivante, permettant à l'erreur d'être rétropropagée efficacement dans tout le réseau.
                     </p>
                     <p>
                     </p>
