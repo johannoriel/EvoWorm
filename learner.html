@@ -117,6 +117,23 @@
         <h1>Reconnaissance de Formes - Réseau Neuronal</h1>
         <div class="container">
             <div class="left-panel">
+                <details>
+                    <summary>Explication des paramètres</summary>
+                    <p> <b>Facteur de couche cachée</b> : le nombre de neuronnes de la couche cachée corresponds à nombre d'éléments de la grille multiplié par ce facteur. Plus le nombre est grand, plus le réseau sera précis.
+                        <br><br>
+                        <b>Taux d'apprentissage</b> : C'est la vitesse à laquelle on veut que les neuronnes apprennent.
+                        <br><br>
+                        <b>Epoques</b> : combien de fois d'affilées on applique la rétro-propagation.
+                        <br><br>
+                        <b>Dropout</b> : désactive un certain nombre de neuronnes au hasard à chaque époque pour éviter le surapprentissage. Analogie : C'est comme si vous appreniez à résoudre un problème parfois sans pouvoir utiliser certains outils. Cela vous force à trouver différentes approches et vous rend plus robuste.
+                        <br><br>
+                        <b>Régularisation L2</b> : Pénalise les poids trop grands
+                        Favorise une distribution plus uniforme des poids
+                        Rend le réseau moins sensible aux variations des entrées
+
+                        Analogie : C'est comme si on pénalisait un joueur qui ne fait des passes qu'à un seul coéquipier. On le force ainsi à jouer de manière plus équilibrée avec toute l'équipe.
+                    </p>
+                </details>
                 <div class="parameters">
                     <label
                         >Taille de la grille (N):
@@ -204,6 +221,34 @@
                     <p>
                     </p>
                 </details>
+                <details>
+                    <summary>Comment le réseau "apprends" ?</summary>
+                    <p> Le réseau de neuronnes artificiels (ANN) apprends grâce à la rétropropagation. C'est de l'apprentissage dit "supervisé".
+                        On corrige, par petites touches, la sortie pour qu'elle se rapproche le plus possible, progressivement, du résultat voulu, en modifiant les poids des derniers neuronnes, puis on applique la même procédure aux neuronnes des couches précédentes.
+                        <img src="https://penseeartificielle.fr/wp-content/uploads/2019/10/exemple-de-backpropagation.jpg"
+                            Il ne dispose que d'une seule couche cachée mais le principe reste le même. Un neuronne est relié unique à ceux de la couche précédente et à tous ceux de la couche ciblée.
+                            Le réseau de neurones artificiels (ANN) apprend grâce à l'algorithme de rétropropagation, un processus d'apprentissage supervisé. Cet algorithme ajuste progressivement les paramètres du réseau pour réduire l'écart entre la sortie actuelle et la sortie souhaitée.
+                                <br><br>
+                                Lors de chaque itération, la sortie calculée par le réseau est comparée au résultat attendu, et l'erreur est mesurée. Cette erreur est ensuite propagée en arrière, des couches de sortie vers les couches d'entrée, en modifiant les poids des connexions neuronales pour minimiser l'erreur. Les ajustements sont d'abord appliqués aux neurones de la couche de sortie, puis aux couches précédentes, de manière progressive.
+                                <br><br>
+                                Ce processus repose sur la dérivation et l'optimisation : chaque poids est modifié en fonction de la dérivée de l'erreur par rapport à ce poids, permettant ainsi un ajustement optimal qui minimise l'erreur globale. Même avec une seule couche cachée, le principe reste le même. Chaque neurone est connecté aux neurones de la couche précédente et de la couche suivante, permettant à l'erreur d'être rétropropagée efficacement dans tout le réseau.
+                    </p>
+                    <p>
+                    </p>
+                </details>
+                <details>
+                    <summary>Comment fonctionne cette démo ?</summary>
+                    <p> Dessinnez une forme sur la grille en cliquant sur les cases. Quand elle est prête, donne lui un nom évocateur et cliquez sur "Stocker".
+                        Répétez pour l'ensemble des formes que vous souhaitez faire apprendre à votre ANN.
+                        Ensuite, cliquez sur "Enseigner" en réglant au préalable le nombre d'Epoques (nombre de round d'apprentissages lancés en une seule fois).
+                        Observez les courbes d'erreurs qui vous indiquent quand les formes sont bien apprises.
+                        Enfin, grâce au bouton "Reconnaitre" vous pouvez tracer des formes ou cliquer sur les anciennes pour les remettre dans la grille et vous verrer apparaître leur score.
+                        Un simple clic sur la grille déclenche automatiquement une reconnaissance.
+                    </p>
+                    <p>
+                    </p>
+                </details>
+
                 <div id="charts" class="charts"></div>
                 <div id="networkViz" class="network-viz"></div>
             </div>
