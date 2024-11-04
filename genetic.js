@@ -103,11 +103,11 @@ class Worm {
       //console.log("animate Step "+this.time);
 
       // Check collision
-      this.alive = !this.agent.collision;
+      this.alive = !this.agent.collision && this.agent.checkInside();
     } else {
       this.agent.iterate(null, dt);
       this.agent.vision(null);
-      this.alive = !this.agent.collision;
+      this.alive = !this.agent.collision && this.agent.checkInside();
     }
 
     // Update neural network inputs from vision

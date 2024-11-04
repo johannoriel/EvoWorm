@@ -139,6 +139,15 @@ class Agent {
     this.a = acc;
   }
 
+  checkInside() {
+    return (
+      this.x > 0 &&
+      this.y > 0 &&
+      this.x < this.arena.width &&
+      this.y < this.arena.height
+    );
+  }
+
   setRotation(rot) {
     this.vTheta = Math.max(-PI / 3, Math.min(PI / 3, rot));
   }
@@ -178,7 +187,7 @@ class Agent {
 
     // Update distance
     this.distance +=
-      this.v * dt * (this.x / this.arena.width) * (this.y / this.arena.height);
+      this.v * dt * (this.x / this.arena.width + this.y / this.arena.height);
   }
 
   vision(ctx) {
