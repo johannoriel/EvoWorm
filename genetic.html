@@ -1,0 +1,253 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Neural Network Evolution</title>
+        <style></style>
+        <link rel="stylesheet" type="text/css" href="styles.css" />
+    </head>
+    <body>
+        <script src="agent.js"></script>
+        <script src="nn.js"></script>
+        <script src="genetic.js"></script>
+        <div class="container">
+            <div class="simulation">
+                <canvas id="simulationCanvas" width="800" height="500"></canvas>
+            </div>
+
+            <div class="controls">
+                <h2>Evolution Controls</h2>
+                <div class="control-group">
+                    <label for="populationSize">Population Size:</label>
+                    <input
+                        type="number"
+                        id="populationSize"
+                        value="10"
+                        min="10"
+                        max="200"
+                    />
+                </div>
+                <div class="control-group">
+                    <label for="muteRatio">Mutation Ratio:</label>
+                    <input
+                        type="number"
+                        id="muteRatio"
+                        value="0.2"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                    />
+                </div>
+                <div class="control-group">
+                    <label for="muteFactor">Mutation Factor:</label>
+                    <input
+                        type="number"
+                        id="muteFactor"
+                        value="10"
+                        min="1"
+                        max="20"
+                    />
+                </div>
+                <button id="startButton">Start Evolution</button>
+                <button id="stopButton">Stop</button>
+                <button id="showButton">Show Best</button>
+                <button id="newMapButton">Generate New Map</button>
+
+                <div class="stats">
+                    <h3>Statistics</h3>
+                    <p>Generation: <span id="generation">0</span></p>
+                    <p>Best Score: <span id="bestScore">0</span></p>
+                    <p>Best Time: <span id="bestTime">0</span></p>
+                </div>
+            </div>
+            <div>
+                <details>
+                <summary>Qu'est-ce que l'algorithme génétique</summary>
+                <img src="https://www.researchgate.net/profile/Robert-Woodward-6/publication/305440735/figure/fig3/AS:385812580585475@1468996295391/Illustration-of-the-genetic-algorithm-concept-showing-an-example-iteration-of-the.png"></img>
+                <br><br>
+                Voici comment fonctionne cet algorithme selon les étapes représentées :
+                    <br><br>
+                    <b>Population initiale</b> : On commence avec une population aléatoire de solutions potentielles (individus). Dans cet exemple, chaque individu est représenté par un ensemble de 4 gènes (valeurs numériques).
+                    <br><br>
+                    <b>Mesurer la fitness</b> : Chaque individu se voit attribuer un score de fitness qui évalue sa qualité ou son aptitude par rapport au problème à résoudre. Dans l'image, les scores de fitness pour trois individus sont 13%, 4% et 33%.
+                    <br><br>
+                    <b>Sélection</b> : Des parents sont choisis pour la reproduction, souvent en utilisant une méthode comme la roulette (wheel selection), où la probabilité de sélection est proportionnelle au score de fitness. Plus un individu a un score de fitness élevé, plus il a de chances d'être choisi.
+                    <br><br>
+                    <b>Reproduction (croisement)</b> : Deux parents sélectionnés produisent des enfants en croisant leurs gènes (crossover). Chaque enfant hérite de gènes provenant des deux parents.
+                    <br><br>
+                    <b>Mutation</b> : De manière occasionnelle, un gène d'un enfant peut muter de manière aléatoire. Cela introduit de la variabilité dans la population et aide à éviter de rester bloqué dans des solutions sous-optimales.
+                    <br><br>
+                    <b>Nouvelle génération</b> : La nouvelle population est formée par les enfants créés lors de la reproduction. Certaines des meilleures solutions de la génération précédente peuvent être copiées directement dans la nouvelle génération (élitisme), garantissant ainsi que les meilleures solutions ne sont pas perdues.
+                    <br><br>
+                    Ce cycle se répète pour un certain nombre de générations jusqu'à ce qu'une solution optimale ou suffisamment bonne soit trouvée. L'élitisme permet de préserver les meilleures solutions d'une génération à l'autre, tandis que la mutation assure la diversité génétique et aide à explorer de nouvelles solutions.
+                    <br><br>
+                </p>
+                </details>
+            </div>
+            <div>
+                <details>
+                <summary>Explication du "jeu"</summary>
+                <h3>Réseau de neuronnes qui apprends par algorithme génétique</h3>
+                Les créatures peuvent se déplacer. Le but est d'apprendre à éviter les obstacles grâce à leur réseau de neuronne. Mais les créatures n'apprennent pas au cours de leur vie, c'est l'évolution qui fait évoluer la population et c'est la population qui apprends.
+                <br><br>
+                La taille de la population indique le nombre de créatures qui évoluent à chaque génération.
+                <br><br>
+                Mutation ratio : indique, dans le réseau de neuronne de chaque créature, combien, en pourcentage, on fait muter de poids. Plus ce facteur est gros, plus les mutations seront nombreuses.
+                <br><br>
+                Mutation Factor : indique de combien on fait muter les poids. Plus ce facteur est gros, plus les mutations seront "fortes"
+                cf la fonction Neuron.mute()
+                <br><br>
+                [Start Evolution] fait évoluer les créatures en continu. Vous pouvez à tout moment afficher le déplacement de la meilleure.
+                <br><br>
+                [Stop] fait cesser l'évolution, permet d'examiner les créatures une à une.
+                <br><br>
+                [Show Best] affiche la créature avec le meilleur score. Le score dépend du temps de survie, mais aussi de la distance parcourue par la créature et de sa capacité à l'éloigner de son point d'origine.
+                (Le but est d'éviter qu'elles n'apprennent à rester surplace pour survivre sans se heurter à un obstacle)
+                cf Agent.iterate() pour le calcul (this.distance = ???)
+                <br><br>
+                [Generate New Map] permet de créer une nouvelle carte et de voir comment les créatures se comportent dedans.
+                </p>
+                </details>
+            </div>
+            <div class="scores-table-container">
+                <h3>Scores par créature</h3>
+                <table id="scoresTable" class="scores-table">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Créature</th>
+                            <th>Score</th>
+                            <th>Time alive</th>
+                            <th>Median</th>
+                            <th>Génération</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Sera rempli dynamiquement -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <script>
+            const populationSize = parseInt(
+                document.getElementById("populationSize").value,
+            );
+            const mutationRatio = parseInt(
+                document.getElementById("muteRatio").value,
+            );
+            const mutationFactor = parseInt(
+                document.getElementById("muteFactor").value,
+            );
+            // Simulation Constants
+            const WinX = 800;
+            const WinY = 500;
+
+            // Arena options
+            const BoxH = 30;
+            const NbBoxes = 20;
+
+            // Porsche (car) options
+            const VisionX = 10;
+            const VisionY = 15;
+            const FactorTheta = 20;
+            const FactorDepth = 5;
+            const AccMax = 10;
+            const kFrott = 0;
+            const MaxSpeed = 30;
+            const MinSpeed = 4;
+            const StartSpeed = 20;
+
+            // Genetic algorithm + neural network options
+            const TimeLimit = 10000;
+            const MuteRatio = 0.2;
+            const MuteFactor = 10;
+            const FeedBack = 0;
+            const FeedBackSpeed = 0;
+
+            // Global instances
+            // Main simulation control
+            let isRunning = false;
+            let isShowing = false;
+            const canvas = document.getElementById("simulationCanvas");
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            const arena = new Arena(WinX, WinY, canvas);
+            arena.generate(10, 50); // 10 boxes of size 50
+            let population = new Population(populationSize, 0.1);
+            updateStats();
+            population.creatures[0].processScore(true, canvas, 0.00001);
+
+            startButton.addEventListener("click", () => {
+                isRunning = true;
+                runEvolution();
+            });
+
+            showButton.addEventListener("click", () => {
+                isShowing = true;
+                const best = population.getBest();
+                best.processScore(true, canvas, 0.00001);
+                isShowing = false;
+            });
+
+            stopButton.addEventListener("click", () => {
+                isRunning = false;
+            });
+
+            newMapButton.addEventListener("click", () => {
+                population.newMap();
+                isEvolutionPaused = false;
+            });
+
+            // Modify runEvolution to show progression
+            function runEvolution() {
+                if (!isRunning) return;
+                if (isShowing) return;
+                //console.log("**** Runing evolution");
+
+                const muteRatio = parseFloat(
+                    document.getElementById("muteRatio").value,
+                );
+                const muteFactor = parseFloat(
+                    document.getElementById("muteFactor").value,
+                );
+
+                const oldBest = population.best;
+                population.process(muteRatio, muteFactor, 0.1);
+
+                updateStats();
+                requestAnimationFrame(runEvolution);
+            }
+
+            function updateStats() {
+                // Update existing stats
+                document.getElementById("generation").textContent =
+                    population.generation;
+                document.getElementById("bestScore").textContent =
+                    population.best.toFixed(2);
+                document.getElementById("bestTime").textContent =
+                    population.time;
+
+                // Update scores table
+                const tableBody = document.querySelector("#scoresTable tbody");
+
+                tableBody.innerHTML = population.scores.map((scoreData, index) => `
+                  <tr  class="creature-row cursor-pointer" data-index="${scoreData.indice}">
+                    <td class="p-2 border">${index + 1}</td>
+                    <td class="p-2 border">${scoreData.indice + 1}</td>
+                    <td class="p-2 border">${scoreData.score.toFixed(2)}</td>
+                    <td class="p-2 border">${population.creatures[scoreData.indice].time.toFixed(2)}</td>
+                    <td class="p-2 border">${population.creatures[scoreData.indice].median().toFixed(4)}</td>
+                    <td class="p-2 border">${population.generation}</td>
+                  </tr>
+                `).join('');
+
+                  const creatureRows = tableBody.querySelectorAll('.creature-row');
+                  creatureRows.forEach((row) => {
+                    row.addEventListener('click', () => {
+                      const index = parseInt(row.dataset.index);
+                      population.creatures[index].processScore(true, canvas, 0.00001);
+                    });
+                  });
+            }
+        </script>
+    </body>
+</html>
