@@ -537,7 +537,34 @@
             function drawPerceptron() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Axes
+                // Création des zones colorées
+                const imageData = ctx.createImageData(
+                    canvas.width,
+                    canvas.height,
+                );
+                for (let x = 0; x < canvas.width; x++) {
+                    for (let y = 0; y < canvas.height; y++) {
+                        const inputs = canvasToPerceptron(x, y);
+                        const prediction = perceptron.predict(inputs);
+                        const index = (y * canvas.width + x) * 4;
+                        if (prediction === 1) {
+                            // Classe rouge
+                            imageData.data[index] = 255; // Rouge
+                            imageData.data[index + 1] = 200; // Teinte pastel
+                            imageData.data[index + 2] = 200;
+                            imageData.data[index + 3] = 100; // Transparence
+                        } else {
+                            // Classe bleue
+                            imageData.data[index] = 200;
+                            imageData.data[index + 1] = 200;
+                            imageData.data[index + 2] = 255; // Bleu pastel
+                            imageData.data[index + 3] = 100;
+                        }
+                    }
+                }
+                ctx.putImageData(imageData, 0, 0);
+
+                // Dessin des axes
                 ctx.beginPath();
                 ctx.moveTo(0, canvas.height / 2);
                 ctx.lineTo(canvas.width, canvas.height / 2);
