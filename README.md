@@ -1,6 +1,8 @@
 # TutoLLM
 Pour comprendre, depuis la base (avec de simples additions et multiplications), comment est construit chatGPT à partir de la brique fondamentale : le perceptron, en passant par le transformer. 
 [eBook gratuit : comprendre ChatGPT](https://boutique.yoga-pro.xyz/b/FW3oG)
+[Cours vidéo sur le secret du perceptron](https://www.youtube.com/watch?v=818x-p8V-00)
+
 
 3 démos pour "jouer" avec les fondements des réseaux de neuronnes pour se faire une intuition de ce qu'il y a dans chatGPT
 1. Le [perceptron](https://johannoriel.github.io/TutoLLM/perceptron.html) : l'exemple le plus minimaliste qui soit, mais, tout est déjà là
